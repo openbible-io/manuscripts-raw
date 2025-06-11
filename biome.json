@@ -24,7 +24,8 @@
 				"noExplicitAny": "off"
 			},
 			"style": {
-				"noParameterAssign": "off"
+				"noParameterAssign": "off",
+				"noNonNullAssertion": "off"
 			},
 			"complexity": {
 				"noForEach": "off"

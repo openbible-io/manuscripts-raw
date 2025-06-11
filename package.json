@@ -2,7 +2,6 @@
 	"license": "CC0-1.0",
 	"dependencies": {
 		"@types/node": "^22.15.30",
-		"@vingle/bmp-js": "^0.2.5",
 		"p-queue": "^8.1.0",
 		"p-retry": "^6.2.1",
 		"preact": "^10.26.9",

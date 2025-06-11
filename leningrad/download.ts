@@ -71,15 +71,15 @@ export function archiveOrgUrl(page: number, opts?: Archive) {
 }
 
 export const sources = {
-	"Archive.org Black+White": {
+	"Black+White": {
 		url: `https://archive.org/details/${archive.black_white.id}`,
 		imageUrl: (index: number) => archiveOrgUrl(index, archive.black_white),
 	},
-	"Archive.org Color": {
+	"Color": {
 		url: `https://archive.org/details/${archive.color.id}`,
 		imageUrl: (index: number) => archiveOrgUrl(index, archive.color),
 	},
-	"Sefaria.org Cropped": {
+	"Cropped": {
 		url: sefariaUrl(0),
 		imageUrl: sefariaUrl,
 	},
@@ -90,15 +90,15 @@ export async function leningrad(
 	prefix: string = source,
 ) {
 	const src = sources[source];
-	console.log("downloading", source, "to", prefix);
-	await mkdir(join(prefix, "f"), { recursive: true });
+	console.log("downloading images to folio");
+	await mkdir(join(prefix, "folio"), { recursive: true });
 
 	const items = [];
 
 	for (let i = 0; i < nFolioPages; i++) {
 		const page = indexToPage(i);
 		const fname = `${page.number.toString().padStart(3, "0")}${page.side}.jpg`;
-		const outpath = join(prefix, "f", fname);
+		const outpath = join(prefix, "folio", fname);
 		items.push({ url: src.imageUrl(i), path: outpath });
 	}
 

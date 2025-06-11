@@ -1,7 +1,8 @@
-import sharp from "sharp";
+import sharp, { type ResizeOptions } from "sharp";
 import { open, unlink, rename } from "node:fs/promises";
 import PQueue from "p-queue";
 import pRetry from "p-retry";
+import { availableParallelism } from "node:os";
 
 function formatBytes(bytes: number): string {
 	const table = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -49,13 +50,12 @@ export class ProgressBar {
 export async function download(
 	url: string,
 	path: string,
-	opts: { bar?: boolean; timeout?: number } = {},
+	opts: { bar?: boolean } = {},
 ) {
 	opts.bar ??= true;
-	opts.timeout ??= 10_000;
 
 	const file = await open(path, "w");
-	const resp = await fetch(url, { signal: AbortSignal.timeout(opts.timeout) });
+	const resp = await fetch(url);
 
 	const total = resp.headers.get("content-length") ?? "0";
 	const bar = opts.bar
@@ -74,35 +74,79 @@ export async function download(
 	await file.close();
 }
 
-export async function downloadAll(items: { url: string; path: string }[]) {
-	const queue = new PQueue({ concurrency: 100 });
+interface QueueOptions {
+	retries?: number;
+	timeout?: number;
+	concurrency?: number;
+}
+
+async function doAllWithProgress<T, U>(
+	items: T[],
+	fn: (t: T) => Promise<U>,
+	opts: QueueOptions = {},
+): Promise<U[]> {
+	opts.retries ??= 0;
+	opts.timeout ??= 60_000;
+	opts.concurrency ??= availableParallelism();
+
+	const queue = new PQueue({ concurrency: opts.concurrency });
+	const results: U[] = [];
 
 	const bar = new ProgressBar(items.length);
-	for (const thing of items) {
-		queue.add(() =>
-			pRetry(() => download(thing.url, thing.path, { bar: false }), { retries: 5 }),
-		);
+	for (const item of items) {
+		queue.add(async () => {
+			results.push(
+				await pRetry(() => fn(item), {
+					retries: opts.retries,
+					signal: AbortSignal.timeout(opts.timeout!),
+				}),
+			);
+		});
 	}
 
 	queue.on("completed", () => bar.tick());
-	return new Promise((res) => queue.on("idle", res));
+	return new Promise((res, rej) => {
+		queue.on("error", rej); // fail fast
+		queue.on("idle", () => res(results));
+	});
 }
 
-export async function convertImg(imgPath: string) {
+export async function downloadAll(
+	items: { url: string; path: string }[],
+	opts?: QueueOptions,
+) {
+	return doAllWithProgress(
+		items,
+		(i) => download(i.url, i.path, { bar: false }),
+		opts,
+	);
+}
+
+async function convertImg(imgPath: string): Promise<string> {
 	const tmp = `${imgPath}.webp`;
-	await sharp(imgPath).toFile(tmp);
+	const img = sharp(imgPath);
+	await img.toFile(tmp);
+
+	const newPath = imgPath.replace(/\..*/, ".webp");
+	await rename(tmp, newPath);
 	await unlink(imgPath);
-	await rename(tmp, imgPath.replace(/\..*/, ".webp"));
+	return newPath;
 }
 
-export async function convertAll(paths: string[]) {
-	const queue = new PQueue();
+export async function convertAll(paths: string[]): Promise<string[]> {
+	console.log("converting to webp");
+	return doAllWithProgress(paths, convertImg);
+}
 
-	const bar = new ProgressBar(paths.length);
-	for (const path of paths) {
-		queue.add(() => convertImg(path));
-	}
+async function resizeImg(inPath: string, outPath: string, opts: ResizeOptions) {
+	const img = sharp(inPath);
+	await img.resize(opts).toFile(outPath);
+}
 
-	queue.on("completed", () => bar.tick());
-	return new Promise((res) => queue.on("idle", res));
+export async function resizeAll(
+	paths: { in: string; out: string }[],
+	opts: ResizeOptions,
+) {
+	console.log("resizing");
+	return doAllWithProgress(paths, (p) => resizeImg(p.in, p.out, opts));
 }
