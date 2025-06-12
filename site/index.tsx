@@ -1,6 +1,7 @@
 import { render } from "preact";
 import { dir, indexToPage, nFolioPages, sources } from "../leningrad/download";
 import { useEffect, useState } from "preact/hooks";
+import { Transform } from "./Transform";
 
 function minMax(n: number, min: number, max: number) {
 	return Math.min(Math.max(n, min), max);
@@ -8,11 +9,16 @@ function minMax(n: number, min: number, max: number) {
 
 function Img(props: { prefix: string; number: number; class: string }) {
 	const page = indexToPage(props.number);
+	let src = props.prefix;
+	src += "/";
+	src += page.number.toString().padStart(3, "0");
+	src += page.side;
+	src += ".webp";
 
 	return (
 		<img
 			class={`w-1/2 object-contain ${props.class}`}
-			src={`${props.prefix}/${page.number.toString().padStart(3, "0")}${page.side}.webp`}
+			src={src}
 			alt={`Page ${page.number} side ${page.side}`}
 		/>
 	);
@@ -60,11 +66,14 @@ function Book(props: { prefix: string; nImages: number }) {
 
 	return (
 		<>
-			<div class="flex h-dvh overflow-auto" dir={dir}>
+			<Transform class="flex h-dvh" dir={dir}>
 				<Img class="object-left" prefix={pagePrefix} number={number - 1} />
 				<Img class="object-right" prefix={pagePrefix} number={number} />
-			</div>
-			<div class="w-full absolute bottom-0 grid grid-cols-2 bg-black/50 text-white p-2 rounded-md">
+			</Transform>
+			<div
+				class="w-full absolute bottom-0 grid grid-cols-2 bg-black/50 text-white p-2 rounded-md"
+				dir={dir}
+			>
 				<ImgSources number={number - 1} />
 				<ImgSources number={number} />
 				<div class="w-full col-span-2 flex" dir="ltr">
