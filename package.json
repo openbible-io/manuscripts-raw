@@ -6,14 +6,18 @@
 		"tailwindcss": "^4.1.9"
 	},
 	"devDependencies": {
+		"@commander-js/extra-typings": "^14.0.0",
 		"@types/bun": "^1.2.16",
 		"@types/node": "^22.15.30",
 		"bun-plugin-tailwind": "^0.0.15",
+		"commander": "^14.0.0",
 		"p-queue": "^8.1.0",
 		"p-retry": "^6.2.1",
 		"sharp": "^0.33.5"
 	},
 	"scripts": {
+		"download": "bun run ./download.ts",
+		"convert": "bun run ./convert.ts",
 		"start": "bun run ./site/dev.ts"
 	}
 }
