@@ -8,7 +8,7 @@ function minMax(n: number, min: number, max: number) {
 	return Math.min(Math.max(n, min), max);
 }
 
-function Img(props: { prefix: string; number: number; class: string }) {
+function Img(props: { prefix: string; number: number; class?: string }) {
 	const page = indexToPage(props.number);
 	let src = props.prefix;
 	src += "/";
@@ -17,12 +17,8 @@ function Img(props: { prefix: string; number: number; class: string }) {
 	src += ".webp";
 
 	return (
-		<div>
-			<img
-				class={`grow object-contain ${props.class}`}
-				src={src}
-				alt={`Page ${page.number} side ${page.side}`}
-			/>
+		<div class={classnames("grow", props.class)}>
+			<img src={src} alt={`Page ${page.number} side ${page.side}`} />
 		</div>
 	);
 }
@@ -48,8 +44,8 @@ function ImgSources(props: { number: number; class?: string }) {
 }
 
 function Book(props: { prefix: string; nImages: number }) {
-	// Assume "1a" is cover page.
 	const [number, setNumber] = useState(0);
+	const transform = useSignal(new DOMMatrix().toString());
 	const step = useSignal(2);
 	const pagePrefix = `${props.prefix}/folio`;
 	const ref = useRef<HTMLDivElement>(null);
@@ -77,7 +73,6 @@ function Book(props: { prefix: string; nImages: number }) {
 			let newStep = 0;
 			const imgs = r.getElementsByTagName("img");
 			for (let i = 0; i < imgs.length; i++) {
-				console.log(imgs[i].offsetParent)
 				if (imgs[i].offsetParent) newStep += 1;
 			}
 			step.value = newStep;
@@ -88,40 +83,60 @@ function Book(props: { prefix: string; nImages: number }) {
 
 	return (
 		<div ref={ref}>
-			<Transform class="flex items-center h-dvh" dir={dir}>
-				<Img class="object-left" prefix={pagePrefix} number={number - 1} />
-				<Img
-					class="object-right hidden md:inline-block"
-					prefix={pagePrefix}
-					number={number}
-				/>
-			</Transform>
-			<div
-				class="w-full absolute bottom-0 grid grid-cols-2 bg-black/50 text-white p-2 rounded-md"
+			<Transform
+				transform={transform}
+				class="flex items-center h-dvh"
 				dir={dir}
 			>
-				<ImgSources class="md:col-span-1 col-span-2" number={number - 1} />
-				<ImgSources class="hidden md:inline" number={number} />
-				<div class="w-full col-span-2 flex" dir="ltr">
-					<input
-						class="grow"
-						type="range"
-						dir={dir}
-						value={number}
-						min={0}
-						max={nFolioPages}
-						step={step}
-						onInput={(ev) => setNumber(+ev.currentTarget.value)}
-					/>
-					<input
-						type="number"
-						value={number}
-						min={0}
-						max={nFolioPages}
-						step={step}
-						onChange={(ev) => setNumber(+ev.currentTarget.value)}
-					/>
-					{`/ ${nFolioPages}`}
+				<Img prefix={pagePrefix} number={number - 1} />
+				<Img class="hidden md:block" prefix={pagePrefix} number={number} />
+			</Transform>
+			<div class="absolute top-0 right-0 text-white">
+				<div class="h-12 bg-black/50 p-2 rounded-md m-2">
+					<button
+						type="button"
+						class="h-full"
+						onMouseDown={() => (transform.value = new DOMMatrix().toString())}
+					>
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							height="100%"
+							viewBox="0 0 24 24"
+						>
+							<title>Home</title>
+							<path
+								fill="currentColor"
+								d="M6 19h3v-6h6v6h3v-9l-6-4.5L6 10zm-2 2V9l8-6l8 6v12h-7v-6h-2v6zm8-8.75"
+							/>
+						</svg>
+					</button>
+				</div>
+			</div>
+			<div class="absolute bottom-0 text-white w-full" dir={dir}>
+				<div class="grid grid-cols-2 bg-black/50 p-2 rounded-md">
+					<ImgSources class="md:col-span-1 col-span-2" number={number - 1} />
+					<ImgSources class="hidden md:inline" number={number} />
+					<div class="w-full col-span-2 flex" dir="ltr">
+						<input
+							class="grow"
+							type="range"
+							dir={dir}
+							value={number}
+							min={0}
+							max={nFolioPages}
+							step={step}
+							onInput={(ev) => setNumber(+ev.currentTarget.value)}
+						/>
+						<input
+							type="number"
+							value={number}
+							min={0}
+							max={nFolioPages}
+							step={step}
+							onChange={(ev) => setNumber(+ev.currentTarget.value)}
+						/>
+						{`/ ${nFolioPages}`}
+					</div>
 				</div>
 			</div>
 		</div>

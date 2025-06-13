@@ -1,6 +1,9 @@
-import { useComputed, useSignal } from "@preact/signals";
+import { type Signal, useComputed, useSignal } from "@preact/signals";
 import type { JSX } from "preact";
 import { useEffect } from "preact/hooks";
+import rotationUrl from "./rotate.svg";
+
+const rotationCursor = `url(${rotationUrl}) 8 8, pointer`;
 
 export default function classnames(
 	...classes: (JSX.HTMLAttributes["class"] | boolean | undefined | null)[]
@@ -13,6 +16,7 @@ interface TransformProps
 		JSX.HTMLAttributes<HTMLDivElement>,
 		"style" | "onPointerDown" | "onPointerUp" | "onPointerMove"
 	> {
+	transform: Signal<string>;
 	isPanning?(ev: PointerEvent): boolean;
 	cursorElement?: HTMLElement;
 }
@@ -20,9 +24,9 @@ interface TransformProps
 export function Transform({
 	isPanning = (ev) => [1, 2, 4].some((b) => ev.buttons & b),
 	cursorElement = document.body,
+	transform,
 	...rest
 }: TransformProps) {
-	const transform = useSignal(new DOMMatrix().toString());
 	const pos = useSignal(new DOMPoint());
 
 	function pointer(ev: PointerEvent) {
@@ -47,24 +51,38 @@ export function Transform({
 	}
 
 	useEffect(() => {
-		function onPointerUp() {
-			cursorElement.style.cursor = "";
+		function resetCursor(ev: KeyboardEvent | PointerEvent) {
+			if (!ev.shiftKey) cursorElement.style.cursor = "";
+		}
+		function onKeyDown(ev: KeyboardEvent) {
+			if (ev.shiftKey) cursorElement.style.cursor = rotationCursor;
 		}
 
-		document.addEventListener("pointerup", onPointerUp);
-		return () => document.removeEventListener("pointerup", onPointerUp);
+		document.addEventListener("pointerup", resetCursor);
+		document.addEventListener("keydown", onKeyDown);
+		document.addEventListener("keyup", resetCursor);
+		return () => {
+			document.removeEventListener("pointerup", resetCursor);
+			document.removeEventListener("keydown", onKeyDown);
+			document.removeEventListener("keyup", onKeyDown);
+		};
 	}, [cursorElement]);
 
 	function wheel(ev: WheelEvent) {
 		const x = ev.pageX;
 		const y = ev.pageY;
 		const dir = ev.deltaY > 0 ? 1 : -1;
-		const amount = 1 - dir * 0.05;
 		const m = new DOMMatrix(transform.value);
 
-		m.scaleSelf(amount);
-		m.e = x - (x - m.e) * amount;
-		m.f = y - (y - m.f) * amount;
+		const newTransform = new DOMMatrix().translateSelf(x, y);
+		if (ev.shiftKey) {
+			const amount = dir * 0.5;
+			newTransform.rotateSelf(amount)
+		} else {
+			const amount = 1 - dir * 0.05;
+			newTransform.scaleSelf(amount)
+		}
+		m.preMultiplySelf(newTransform.translateSelf(-x, -y));
 		transform.value = m.toString();
 		ev.preventDefault();
 	}
