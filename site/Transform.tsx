@@ -59,10 +59,8 @@ export function Transform({
 		const x = ev.pageX;
 		const y = ev.pageY;
 		const dir = ev.deltaY > 0 ? 1 : -1;
-		let amount = 1 - dir * 0.05;
+		const amount = 1 - dir * 0.05;
 		const m = new DOMMatrix(transform.value);
-
-		if (amount * m.a < 1) amount = 1 / m.a;
 
 		m.scaleSelf(amount);
 		m.e = x - (x - m.e) * amount;

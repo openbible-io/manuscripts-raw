@@ -2,15 +2,18 @@
 	"license": "CC0-1.0",
 	"dependencies": {
 		"@preact/signals": "^2.2.0",
-		"@types/bun": "^1.2.16",
-		"@types/node": "^22.15.30",
-		"p-queue": "^8.1.0",
-		"p-retry": "^6.2.1",
 		"preact": "^10.26.9",
-		"sharp": "^0.33.5",
 		"tailwindcss": "^4.1.9"
 	},
 	"devDependencies": {
-		"bun-plugin-tailwind": "^0.0.15"
+		"@types/bun": "^1.2.16",
+		"@types/node": "^22.15.30",
+		"bun-plugin-tailwind": "^0.0.15",
+		"p-queue": "^8.1.0",
+		"p-retry": "^6.2.1",
+		"sharp": "^0.33.5"
+	},
+	"scripts": {
+		"start": "bun run ./site/dev.ts"
 	}
 }
