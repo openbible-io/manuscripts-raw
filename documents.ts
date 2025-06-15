@@ -1,1 +1,1 @@
-export { leningrad } from "./leningrad";
+export { leningrad } from "./leningrad/index";

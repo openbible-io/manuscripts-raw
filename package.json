@@ -3,6 +3,7 @@
 	"dependencies": {
 		"@preact/signals": "^2.2.0",
 		"preact": "^10.26.9",
+		"preact-iso": "^2.9.2",
 		"tailwindcss": "^4.1.9"
 	},
 	"devDependencies": {

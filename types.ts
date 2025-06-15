@@ -23,6 +23,12 @@ export type Sources = Record<
 >;
 
 export type Document = {
+	title: string;
+	cover: {
+		src: string;
+		width: number;
+		height: number;
+	};
 	/** In order of preference */
 	sources: Sources;
 	/** In order */

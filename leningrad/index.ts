@@ -35,8 +35,8 @@ type Archive = {
 function archiveOrgUrl(section: Section, page: Page, opts: Archive) {
 	const { id, file } = opts;
 	const { number, side } = decodePage(page);
-	let index = (number - 1) * 2 + side === "a" ? 0 : 1;
-	index += opts.offsets?.[section] ?? 0;
+	const index =
+		(number - 1) * 2 + (side === "a" ? 0 : 1) + (opts.offsets?.[section] ?? 0);
 
 	let res = opts.server;
 	res += `/BookReader/BookReaderImages.php?zip=/${opts.zip}/items/`;
@@ -54,6 +54,12 @@ const folio = [...Array(nFolioPages).keys()].map(
 );
 
 export const leningrad: Document = {
+	title: "Leningrad Codex",
+	cover: {
+		src: "cover/1a-small.webp",
+		width: 223,
+		height: 256,
+	},
 	sources: {
 		Color: {
 			url: `https://archive.org/details/${archiveOrg.color.id}`,
